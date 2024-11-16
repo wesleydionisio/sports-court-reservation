@@ -9,6 +9,7 @@ const capitalizeFirstLetter = (string) => {
 
 // Criar reserva
 exports.createReservation = async (req, res) => {
+<<<<<<< Updated upstream
   const { courtId, sport, date, time, recurrence, paymentMethod } = req.body;
   
   try {
@@ -97,8 +98,54 @@ const dayOfWeekCapitalized = capitalizeFirstLetter(
       date: dateObj, // Usar objeto Date local
       time,
       recurrence,
+=======
+  console.log('Recebendo dados da reserva:', req.body);
+  
+  const { courtId, sport, date, time, paymentMethod, status } = req.body;
+  
+  try {
+    // Verificar se todos os campos necessários estão presentes
+    if (!courtId || !sport || !date || !time || !paymentMethod) {
+      return res.status(400).json({ 
+        message: 'Todos os campos são obrigatórios',
+        receivedData: req.body
+      });
+    }
+
+    // Verificar se a quadra existe
+    const court = await Court.findById(courtId);
+    if (!court) {
+      return res.status(404).json({ message: 'Quadra não encontrada' });
+    }
+
+    // Verificar se o usuário está autenticado
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({ message: 'Usuário não autenticado' });
+    }
+
+    // Verificar se já existe uma reserva para este horário
+    const existingReservation = await Reservation.findOne({
+      court: courtId,
+      date: date,
+      time: time,
+      status: { $ne: 'cancelled' } // Ignora reservas canceladas
+    });
+
+    if (existingReservation) {
+      return res.status(400).json({ message: 'Horário já reservado' });
+    }
+
+    // Criar a nova reserva
+    const newReservation = new Reservation({
+      user: req.user._id,
+      court: courtId,
+      sport,
+      date,
+      time,
+>>>>>>> Stashed changes
       paymentMethod,
     });
+<<<<<<< Updated upstream
     
     await reservation.save();
     console.log('Reserva criada com sucesso:', reservation);
@@ -113,6 +160,28 @@ const dayOfWeekCapitalized = capitalizeFirstLetter(
     }
     
     res.status(500).json({ message: 'Erro ao criar reserva' });
+=======
+
+    // Salvar a reserva
+    const savedReservation = await newReservation.save();
+
+    // Retornar a reserva com dados populados
+    const populatedReservation = await Reservation.findById(savedReservation._id)
+      .populate('court', 'name')
+      .populate('user', 'name email');
+
+    console.log('Reserva criada com sucesso:', populatedReservation);
+
+    res.status(201).json(populatedReservation);
+
+  } catch (error) {
+    console.error('Erro ao criar reserva:', error);
+    res.status(500).json({ 
+      message: 'Erro ao criar reserva',
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+>>>>>>> Stashed changes
   }
 };
 

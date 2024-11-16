@@ -17,6 +17,7 @@ import {
 } from 'react-bootstrap';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { format } from 'date-fns';
 
 const Booking = () => {
   const { id } = useParams(); // ID da quadra
@@ -176,6 +177,7 @@ const Booking = () => {
     setReservationError('');
 
     try {
+<<<<<<< Updated upstream
       // Verificar token primeiro
       const token = localStorage.getItem('token');
       if (!token) {
@@ -215,12 +217,17 @@ const Booking = () => {
       }
 
       // Se chegou aqui, temos os dados do usuário
+=======
+      // Formata a data para o formato correto (YYYY-MM-DD)
+      const formattedDate = format(selectedDate, 'yyyy-MM-dd');
+
+>>>>>>> Stashed changes
       const reservationData = {
         userId: user._id,
         courtId: id,
         sport: selectedSport,
-        date: selectedDate.toISOString().split('T')[0],
-        timeSlot: selectedTimeSlot,
+        date: formattedDate,
+        time: selectedTimeSlot, // Garante que está usando 'time' em vez de 'timeSlot'
         paymentMethod: selectedPaymentMethod,
         status: 'pending'
       };
@@ -228,7 +235,21 @@ const Booking = () => {
       console.log('Dados da reserva:', reservationData); // Debug
 
       const response = await api.post('/reservations', reservationData);
+<<<<<<< Updated upstream
       navigate('/confirmation', { state: { reservation: response.data } });
+=======
+      
+      if (response.data) {
+        navigate('/confirmation', { 
+          state: { 
+            reservation: {
+              ...response.data,
+              court: court // Inclui os dados da quadra
+            }
+          } 
+        });
+      }
+>>>>>>> Stashed changes
     } catch (err) {
       console.error('Erro na reserva:', err);
       setReservationError(
