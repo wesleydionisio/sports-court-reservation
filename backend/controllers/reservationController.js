@@ -12,17 +12,61 @@ exports.createReservation = async (req, res) => {
   const { courtId, sport, date, time, recurrence, paymentMethod } = req.body;
   
   try {
-    const court = await Court.findById(courtId);
-    if (!court) return res.status(404).json({ message: 'Quadra não encontrada' });
+    console.log('Recebendo dados da reserva:', req.body);
+    
+    // Verificar se todos os campos obrigatórios estão presentes
+    if (!courtId || !sport || !date || !time || !paymentMethod) {
+      console.log('Campos obrigatórios ausentes.');
+      return res.status(400).json({ message: 'Todos os campos são obrigatórios.' });
+    }
+    
+       // Validar forma de pagamento
+       const validPaymentMethods = ['pagamento_no_ato', 'cartao_credito', 'paypal'];
+       if (!validPaymentMethods.includes(paymentMethod)) {
+         console.log('Forma de Pagamento inválida:', paymentMethod);
+         return res.status(400).json({ message: 'Forma de Pagamento inválida.' });
+       }
+       
+       const court = await Court.findById(courtId);
+       if (!court) {
+         console.log('Quadra não encontrada:', courtId);
+         return res.status(404).json({ message: 'Quadra não encontrada' });
+       }
+
+        // Dividir a data em componentes
+        const [year, month, day] = date.split('-').map(Number);
+        // Criar objeto Date local
+        const dateObj = new Date(year, month - 1, day);
     
     // Verificar se o horário está dentro dos horários de funcionamento
-    const dayOfWeek = new Date(date).toLocaleDateString('en-US', { weekday: 'long' });
+    const dayOfWeek = dateObj.toLocaleDateString('pt-BR', { weekday: 'long' });
+// Correção para lidar com inconsistências
+const dayOfWeekMap = {
+  "Sunday": "Domingo",
+  "Monday": "Segunda-feira",
+  "Tuesday": "Terça-feira",
+  "Wednesday": "Quarta-feira",
+  "Thursday": "Quinta-feira",
+  "Friday": "Sexta-feira",
+  "Saturday": "Sábado"
+};
+
+const dayOfWeekCapitalized = capitalizeFirstLetter(
+  dayOfWeekMap[dateObj.toLocaleDateString('en-US', { weekday: 'long' })]
+);
+    console.log(`Dia da semana capitalizado: ${dayOfWeekCapitalized}`);
+    
     const operatingHours = court.operatingHours[capitalizeFirstLetter(dayOfWeek)];
+    console.log(`Horários de funcionamento para ${dayOfWeekCapitalized}:`, operatingHours);
+    
     if (!operatingHours) {
+      console.log('Quadra fechada no dia selecionado:', dayOfWeekCapitalized);
       return res.status(400).json({ message: 'Quadra fechada no dia selecionado' });
     }
 
+    // Verificar se o horário está dentro do horário de funcionamento
     if (time < operatingHours.open || time >= operatingHours.close) {
+      console.log(`Horário selecionado (${time}) fora dos horários de funcionamento (${operatingHours.open} - ${operatingHours.close})`);
       return res.status(400).json({ message: 'Horário fora dos horários de funcionamento da quadra' });
     }
 
@@ -33,25 +77,41 @@ exports.createReservation = async (req, res) => {
       time: time,
     });
     
+    console.log(`Reservas existentes para ${date} às ${time}:`, existingReservations);
+    
     if (existingReservations.length > 0) {
+      console.log('Horário não disponível:', time);
       return res.status(400).json({ message: 'Horário não disponível' });
+    }
+    
+    // Verificar se o usuário está autenticado
+    if (!req.user || !req.user._id) {
+      console.log('Usuário não autenticado.');
+      return res.status(401).json({ message: 'Usuário não autenticado.' });
     }
     
     const reservation = new Reservation({
       user: req.user._id,
       court: courtId,
       sport,
-      date,
+      date: dateObj, // Usar objeto Date local
       time,
       recurrence,
       paymentMethod,
     });
     
     await reservation.save();
+    console.log('Reserva criada com sucesso:', reservation);
     res.status(201).json(reservation);
     
   } catch (error) {
     console.error('Erro ao criar reserva:', error);
+    
+    // Verificar se é um erro de validação do Mongoose
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ message: error.message });
+    }
+    
     res.status(500).json({ message: 'Erro ao criar reserva' });
   }
 };
@@ -105,7 +165,7 @@ exports.updateReservation = async (req, res) => {
     
     // Verificar se o horário está dentro dos horários de funcionamento
     const court = await Court.findById(reservation.court);
-    const dayOfWeek = new Date(reservation.date).toLocaleDateString('en-US', { weekday: 'long' });
+    const dayOfWeek = new Date(date).toLocaleDateString('en-US', { weekday: 'long' });
     const operatingHours = court.operatingHours[capitalizeFirstLetter(dayOfWeek)];
     if (!operatingHours) {
       return res.status(400).json({ message: 'Quadra fechada no dia selecionado' });

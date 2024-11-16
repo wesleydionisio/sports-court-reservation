@@ -1,13 +1,14 @@
 // src/components/PrivateRoute.js
 import React from 'react';
-import { Navigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { Navigate, useLocation } from 'react-router-dom';
 
 const PrivateRoute = ({ children }) => {
-  const { user } = useAuth();
+  const token = localStorage.getItem('token');
+  const location = useLocation();
 
-  if (!user) {
-    return <Navigate to="/login" />;
+  if (!token) {
+    // Redirecionar para login mantendo a URL original como state
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
   return children;
