@@ -1,58 +1,48 @@
 // backend/server.js
 const express = require('express');
-const connectDB = require('./config/db');
-const dotenv = require('dotenv');
 const cors = require('cors');
-const path = require('path');   
-
-dotenv.config();
-
-// Conectar ao banco de dados
-connectDB();
+const mongoose = require('mongoose');
+require('dotenv').config();
 
 const app = express();
 
-// Middlewares
-app.use(express.json());
+// Middleware
 app.use(cors());
+app.use(express.json());
 
-// Rotas API
-app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/courts', require('./routes/courtRoutes'));
-app.use('/api/reservations', require('./routes/reservationRoutes'));
-app.use('/api/users', require('./routes/userRoutes')); // Certifique-se de adicionar esta rota
+// Rotas
+const userRoutes = require('./routes/userRoutes');
+const courtRoutes = require('./routes/courtRoutes');
 
-// Rota raiz da API
-app.get('/api', (req, res) => {
-  res.send('API de Agendamento de Quadras Esportivas');
+app.use('/api/courts', courtRoutes);
+app.use('/api/users', userRoutes);
+
+// Middleware de tratamento de erros
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ 
+    message: 'Erro interno do servidor',
+    error: process.env.NODE_ENV === 'development' ? err.message : undefined 
+  });
 });
 
-// Servir arquivos estáticos do frontend após build
-app.use(express.static(path.join(__dirname, '../frontend/build')));
+// Conexão com MongoDB
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => {
+    console.log('Conectado ao MongoDB');
+  })
+  .catch((error) => {
+    console.error('Erro ao conectar ao MongoDB:', error);
+  });
 
-// Rota para todas as outras solicitações, servindo o React app
-app.get('*', (req, res) => {
-  res.sendFile(path.resolve(__dirname, '../frontend/build', 'index.html'));
+console.log('MongoDB URI:', process.env.MONGODB_URI);
+
+console.log('Variáveis de ambiente:', {
+    MONGO_URI: process.env.MONGO_URI,
+    MONGODB_URI: process.env.MONGODB_URI
 });
 
-// Captura de erros de porta em uso
 const PORT = process.env.PORT || 5005;
-
-const server = app.listen(PORT, () => {
+app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });
-
-// Tratamento de erro: porta já em uso
-server.on('error', (err) => {
-  if (err.code === 'EADDRINUSE') {
-    console.error(`Erro: a porta ${PORT} já está em uso.`);
-    process.exit(1); // Finaliza o processo
-  } else {
-    console.error('Erro desconhecido:', err);
-    process.exit(1);
-  }
-});
-
-app.use('/api/admin', require('./routes/adminRoutes'));
-
-app.use('/api/users', require('./routes/userRoutes'));

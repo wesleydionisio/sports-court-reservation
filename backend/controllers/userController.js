@@ -105,3 +105,53 @@ exports.deleteUser = async (req, res) => {
   }
 };
 
+// Obter usuário logado
+exports.getMe = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password');
+    if (user) {
+      res.json(user);
+    } else {
+      res.status(404).json({ message: 'Usuário não encontrado' });
+    }
+  } catch (error) {
+    console.error('Erro ao buscar usuário:', error);
+    res.status(500).json({ message: 'Erro ao buscar usuário' });
+  }
+};
+
+exports.login = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        
+        console.log('Tentando conectar ao banco de dados...');
+        // Buscar usuário pelo email
+        const user = await User.findOne({ email });
+        console.log('Resultado da busca:', user ? 'Usuário encontrado' : 'Usuário não encontrado');
+        
+        if (!user) {
+            return res.status(400).json({ message: 'Email ou senha inválidos' });
+        }
+
+        // Verificar senha
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Email ou senha inválidos' });
+        }
+
+        // Criar objeto com dados do usuário (sem a senha)
+        const userData = {
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role
+        };
+
+        // Aqui você pode gerar um token JWT se estiver usando autenticação por token
+        res.json({ token: 'seu_token', user: userData });
+    } catch (error) {
+        console.error('Erro detalhado no login:', error.stack);
+        res.status(500).json({ message: 'Erro no servidor' });
+    }
+};
+

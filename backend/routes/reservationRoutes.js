@@ -1,20 +1,24 @@
 // backend/routes/reservationRoutes.js
 const express = require('express');
 const router = express.Router();
-const { protect } = require('../middlewares/authMiddleware');
 const {
   createReservation,
   getReservations,
   updateReservation,
-  deleteReservation
+  deleteReservation,
+  getBookedTimeSlots
 } = require('../controllers/reservationController');
+const { protect } = require('../middlewares/authMiddleware');
 
-// Criar reserva (protegida)
-router.post('/', protect, createReservation);
+// Rotas protegidas
+router.route('/')
+  .post(protect, createReservation)
+  .get(protect, getReservations);
 
-// Outras rotas...
-router.get('/', protect, getReservations);
-router.put('/:id', protect, updateReservation);
-router.delete('/:id', protect, deleteReservation);
+router.route('/:id')
+  .put(protect, updateReservation)
+  .delete(protect, deleteReservation);
+
+router.get('/:id/bookedSlots', protect, getBookedTimeSlots);
 
 module.exports = router;

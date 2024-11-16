@@ -1,57 +1,67 @@
 // src/App.js
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import PrivateRoute from './routes/PrivateRoute';
+import AdminRoute from './routes/AdminRoute';
+import AdminRoutes from './routes/AdminRoutes';
+
+// Importação de componentes
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
-import Booking from './pages/Booking';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Profile from './pages/Profile';
+import Booking from './pages/Booking';
 import Confirmation from './pages/Confirmation';
-import PrivateRoute from './components/PrivateRoute';
-import { AuthProvider } from './contexts/AuthContext';
-import AdminRoutes from './routes/AdminRoutes';
-import NotFound from './pages/NotFound'; // Importação correta do NotFound
-
+// ... outros imports necessários
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <Navbar />
-        <div className="container mt-4">
+    <Router>
+      <AuthProvider>
+        <div className="App">
+          <Navbar />
           <Routes>
-            {/* Rotas Públicas */}
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-
-            {/* Rotas Protegidas para Usuários Autenticados */}
-            <Route
-              path="/booking/:id"
+            
+            {/* Rotas Privadas */}
+            <Route 
+              path="/profile" 
+              element={
+                <PrivateRoute>
+                  <Profile />
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/booking/:courtId" 
               element={
                 <PrivateRoute>
                   <Booking />
                 </PrivateRoute>
-              }
+              } 
             />
-            <Route
-              path="/confirmation"
+            <Route 
+              path="/confirmation" 
               element={
                 <PrivateRoute>
                   <Confirmation />
                 </PrivateRoute>
-              }
+              } 
             />
 
-            {/* Rotas do Painel Admin */}
+            {/* Rotas Administrativas */}
             <Route path="/admin/*" element={<AdminRoutes />} />
 
-            {/* Rota Padrão para Páginas Não Encontradas */}
-            <Route path="*" element={<NotFound />} />
+            {/* Rota 404 */}
+            <Route path="*" element={<div>Página não encontrada</div>} />
           </Routes>
         </div>
-      </Router>
-    </AuthProvider>
+      </AuthProvider>
+    </Router>
   );
 }
 

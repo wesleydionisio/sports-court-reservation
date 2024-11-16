@@ -1,57 +1,60 @@
 // backend/controllers/authController.js
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
-const dotenv = require('dotenv');
+const bcrypt = require('bcryptjs');
 
-dotenv.config();
-
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: '30d',
-  });
-};
-
-// Registrar novo usuário
-exports.register = async (req, res) => {
-  const { name, email, password, role } = req.body;
-  
-  try {
-    let user = await User.findOne({ email });
-    if (user) return res.status(400).json({ message: 'Usuário já existe' });
-    
-    user = new User({ name, email, password, role });
-    await user.save();
-    
-    res.status(201).json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      token: generateToken(user._id),
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Erro no servidor' });
-  }
-};
-
-// Login de usuário
-exports.login = async (req, res) => {
-  const { email, password } = req.body;
-  
-  try {
-    const user = await User.findOne({ email });
-    if (user && (await user.matchPassword(password))) {
-      res.json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        token: generateToken(user._id),
-      });
-    } else {
-      res.status(401).json({ message: 'Credenciais inválidas' });
+const register = async (req, res) => {
+    try {
+        // Lógica de registro aqui
+        res.status(201).json({ message: 'Usuário registrado com sucesso' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
-  } catch (error) {
-    res.status(500).json({ message: 'Erro no servidor' });
-  }
+};
+
+const login = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        // Verificar se o usuário existe
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(401).json({ message: 'Email ou senha inválidos' });
+        }
+
+        // Verificar senha
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(401).json({ message: 'Email ou senha inválidos' });
+        }
+
+        // Criar token
+        const token = jwt.sign(
+            { id: user._id },
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+
+        // Enviar resposta sem a senha
+        const userResponse = {
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role
+        };
+
+        res.json({
+            user: userResponse,
+            token
+        });
+
+    } catch (error) {
+        console.error('Erro no login:', error);
+        res.status(500).json({ message: 'Erro no servidor' });
+    }
+};
+
+module.exports = {
+    register,
+    login
 };

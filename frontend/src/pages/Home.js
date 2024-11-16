@@ -3,20 +3,22 @@ import React, { useEffect, useState } from 'react';
 import api from '../utils/api';
 import { Card, Button, Row, Col, Spinner, Alert } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 
 const Home = () => {
   const [courts, setCourts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState(null);
 
   const fetchCourts = async () => {
     try {
-      const response = await api.get('/courts');
+      const response = await api.get('/api/courts');
       setCourts(response.data);
       setLoading(false);
-    } catch (err) {
-      console.error('Erro ao buscar quadras:', err);
-      setError(true);
+    } catch (error) {
+      console.error('Erro ao buscar quadras:', error);
+      console.log('Detalhes do erro:', error.response?.data);
+      setError('Erro ao carregar as quadras');
       setLoading(false);
     }
   };
