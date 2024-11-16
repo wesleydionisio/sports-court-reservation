@@ -15,8 +15,8 @@ const { getBookedTimeSlots } = require('../controllers/reservationController'); 
 router.get('/', getCourts);
 router.get('/:id', getCourtById);
 
-// Rota para obter horários reservados para uma quadra em uma data específica
-router.get('/:id/bookedSlots', protect, admin, getBookedTimeSlots);
+// Rota para obter horários reservados para uma quadra em uma data específica (apenas para usuários autenticados)
+router.get('/:id/bookedSlots', protect, getBookedTimeSlots);
 
 // Rotas protegidas (admin)
 router.post('/', protect, admin, createCourt);

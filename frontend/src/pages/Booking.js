@@ -59,19 +59,19 @@ const Booking = () => {
     const slots = [];
     const [openHour, openMinute] = openTime.split(':').map(Number);
     const [closeHour, closeMinute] = closeTime.split(':').map(Number);
-
+  
     let start = new Date();
     start.setHours(openHour, openMinute, 0, 0);
     const end = new Date();
     end.setHours(closeHour, closeMinute, 0, 0);
-
+  
     while (start < end) {
       const hour = start.getHours().toString().padStart(2, '0');
       const minute = start.getMinutes().toString().padStart(2, '0');
       slots.push(`${hour}:${minute}`);
       start.setMinutes(start.getMinutes() + interval);
     }
-
+  
     return slots;
   };
 
@@ -86,44 +86,46 @@ const Booking = () => {
       if (selectedDate && court) {
         const dateStr = selectedDate.toISOString().split('T')[0]; // Formato YYYY-MM-DD
         console.log(`Data selecionada: ${dateStr}`);
-
+  
         try {
           const response = await api.get(`/courts/${id}/bookedSlots`, {
             params: { date: dateStr },
           });
           const bookedSlots = response.data.bookedSlots;
           console.log(`Horários reservados:`, bookedSlots);
-
+  
           // Obter os horários de funcionamento para o dia selecionado
-          const dayOfWeek = selectedDate.toLocaleDateString('en-US', { weekday: 'long' }); // Alterado para 'en-US'
+          const dayOfWeek = selectedDate.toLocaleDateString('pt-BR', { weekday: 'long' }); // Alterado para 'pt-BR'
           console.log(`Dia da semana: ${dayOfWeek}`);
-          const operatingHours = court.operatingHours[capitalizeFirstLetter(dayOfWeek)];
+          const operatingHours = court.operatingHours[dayOfWeek];
           console.log(`Horários de funcionamento:`, operatingHours);
-
+  
           if (!operatingHours) {
             console.warn('Quadra fechada neste dia.');
             setAvailableTimeSlots([]);
             return;
           }
-
+  
           const allSlots = generateTimeSlots(operatingHours.open, operatingHours.close, 60); // Intervalo de 60 minutos
           console.log(`Todos os horários possíveis:`, allSlots);
-
+  
+          // Filtrar os slots que não estão reservados
           const availableSlots = allSlots.filter(slot => !bookedSlots.includes(slot));
           console.log(`Horários disponíveis:`, availableSlots);
-
+  
           setAvailableTimeSlots(availableSlots);
           setSelectedTimeSlot(''); // Resetar o time slot selecionado
         } catch (error) {
           console.error('Erro ao buscar horários reservados:', error);
           setAvailableTimeSlots([]);
+          setReservationError('Erro ao buscar horários disponíveis. Tente novamente mais tarde.');
         }
       } else {
         setAvailableTimeSlots([]);
         setSelectedTimeSlot('');
       }
     };
-
+  
     fetchBookedSlots();
     // eslint-disable-next-line
   }, [selectedDate, court]);
@@ -285,67 +287,29 @@ const Booking = () => {
           />
         </Form.Group>
 
-        {/* Seleção de Time Slot */}
-        {selectedDate && (
-          <Form.Group controlId="timeSlot" className="mb-3">
-            <Form.Label>Horário</Form.Label>
-            <div>
-              {availableTimeSlots.length > 0 ? (
-                availableTimeSlots.map((time, index) => (
-                  <Button
-                    key={index}
-                    variant={selectedTimeSlot === time ? 'primary' : 'outline-primary'}
-                    className="me-2 mb-2"
-                    onClick={() => setSelectedTimeSlot(time)}
-                    style={{ display: 'flex', alignItems: 'center' }}
-                  >
-                    {/* Placeholder para ícone à esquerda */}
-                    {time}
-                  </Button>
-                ))
-              ) : (
-                <Alert variant="warning">Nenhum horário disponível para a data selecionada.</Alert>
-              )}
-            </div>
-          </Form.Group>
-        )}
-
-        {/* Seleção de Forma de Pagamento */}
-        <Form.Group controlId="paymentMethod" className="mb-3">
-          <Form.Label>Forma de Pagamento</Form.Label>
-          <div>
-            {paymentMethods.map((method, index) => {
-              // Escolher ícone com base no método de pagamento
-              let Icon;
-              switch (method) {
-                case 'cartao_credito':
-                  Icon = FaCreditCard;
-                  break;
-                case 'paypal':
-                  Icon = FaPaypal;
-                  break;
-                case 'pagamento_no_ato':
-                  Icon = null; // Adicione um ícone apropriado se desejar
-                  break;
-                default:
-                  Icon = null;
-              }
-
-              return (
-                <Button
-                  key={index}
-                  variant={selectedPaymentMethod === method ? 'success' : 'outline-success'}
-                  className="me-2 mb-2"
-                  onClick={() => setSelectedPaymentMethod(method)}
-                  style={{ display: 'flex', alignItems: 'center' }}
-                >
-                  {Icon && <Icon className="me-2" />}
-                  {method.replace('_', ' ').toUpperCase()}
-                </Button>
-              );
-            })}
-          </div>
-        </Form.Group>
+{/* Seleção de Time Slot */}
+{selectedDate && (
+  <Form.Group controlId="timeSlot" className="mb-3">
+    <Form.Label>Horário</Form.Label>
+    <div>
+      {availableTimeSlots.length > 0 ? (
+        availableTimeSlots.map((time, index) => (
+          <Button
+            key={index}
+            variant={selectedTimeSlot === time ? 'primary' : 'outline-primary'}
+            className="me-2 mb-2"
+            onClick={() => setSelectedTimeSlot(time)}
+            style={{ display: 'flex', alignItems: 'center' }}
+          >
+            {time}
+          </Button>
+        ))
+      ) : (
+        <Alert variant="warning">Nenhum horário disponível para a data selecionada.</Alert>
+      )}
+    </div>
+  </Form.Group>
+)}
 
         {/* Mensagens de Erro */}
         {reservationError && <Alert variant="danger">{reservationError}</Alert>}
