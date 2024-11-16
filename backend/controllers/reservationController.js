@@ -9,50 +9,82 @@ const capitalizeFirstLetter = (string) => {
 
 // Criar reserva
 exports.createReservation = async (req, res) => {
-  const { courtId, sport, date, time, recurrence, paymentMethod } = req.body;
+  console.log('Recebendo dados da reserva:', req.body);
+  
+  const { courtId, sport, date, timeSlot, paymentMethod, status } = req.body;
   
   try {
+    // Verificar se todos os campos necessários estão presentes
+    if (!courtId || !sport || !date || !timeSlot || !paymentMethod) {
+      console.log('Campos obrigatórios faltando:', {
+        courtId: !!courtId,
+        sport: !!sport,
+        date: !!date,
+        timeSlot: !!timeSlot,
+        paymentMethod: !!paymentMethod
+      });
+      return res.status(400).json({ 
+        message: 'Todos os campos são obrigatórios',
+        missingFields: {
+          courtId: !courtId,
+          sport: !sport,
+          date: !date,
+          timeSlot: !timeSlot,
+          paymentMethod: !paymentMethod
+        }
+      });
+    }
+
     const court = await Court.findById(courtId);
-    if (!court) return res.status(404).json({ message: 'Quadra não encontrada' });
-    
+    if (!court) {
+      return res.status(404).json({ message: 'Quadra não encontrada' });
+    }
+
     // Verificar se o horário está dentro dos horários de funcionamento
-    const dayOfWeek = new Date(date).toLocaleDateString('en-US', { weekday: 'long' });
-    const operatingHours = court.operatingHours[capitalizeFirstLetter(dayOfWeek)];
+    const dayOfWeek = new Date(date).toLocaleDateString('pt-BR', { weekday: 'long' });
+    const capitalizedDayOfWeek = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
+    
+    const operatingHours = court.operatingHours[capitalizedDayOfWeek];
     if (!operatingHours) {
       return res.status(400).json({ message: 'Quadra fechada no dia selecionado' });
     }
 
-    if (time < operatingHours.open || time >= operatingHours.close) {
-      return res.status(400).json({ message: 'Horário fora dos horários de funcionamento da quadra' });
-    }
-
     // Verificar disponibilidade
-    const existingReservations = await Reservation.find({
+    const existingReservation = await Reservation.findOne({
       court: courtId,
       date: date,
-      time: time,
+      time: timeSlot
     });
-    
-    if (existingReservations.length > 0) {
-      return res.status(400).json({ message: 'Horário não disponível' });
+
+    if (existingReservation) {
+      return res.status(400).json({ message: 'Horário já reservado' });
     }
-    
+
+    // Criar a reserva
     const reservation = new Reservation({
-      user: req.user._id,
+      user: req.user._id, // ID do usuário autenticado
       court: courtId,
       sport,
       date,
-      time,
-      recurrence,
+      time: timeSlot,
       paymentMethod,
+      status: status || 'pending'
     });
+
+    const savedReservation = await reservation.save();
     
-    await reservation.save();
-    res.status(201).json(reservation);
-    
+    // Popular os dados da quadra e do usuário na resposta
+    const populatedReservation = await Reservation.findById(savedReservation._id)
+      .populate('court', 'name')
+      .populate('user', 'name email');
+
+    res.status(201).json(populatedReservation);
   } catch (error) {
     console.error('Erro ao criar reserva:', error);
-    res.status(500).json({ message: 'Erro ao criar reserva' });
+    res.status(500).json({ 
+      message: 'Erro ao criar reserva',
+      error: error.message 
+    });
   }
 };
 

@@ -1,6 +1,7 @@
 // frontend/src/routes/AdminRoutes.js
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import Dashboard from '../components/Admin/Dashboard';
 import CourtsList from '../components/Admin/Courts/CourtsList';
 import AddCourt from '../components/Admin/Courts/AddCourt';
@@ -14,10 +15,15 @@ import EditReservation from '../components/Admin/Reservations/EditReservation';
 import AdminRoute from '../middlewares/AdminRoute';
 
 const AdminRoutes = () => {
+  const { user } = useAuth();
+
+  if (!user || user.role !== 'admin') {
+    return <Navigate to="/" replace />;
+  }
+
   return (
     <Routes>
-      {/* Rotas Aninhadas sem o prefixo /admin */}
-      <Route path="dashboard" element={<Dashboard />} />
+      <Route path="/" element={<Dashboard />} />
       
       {/* Quadras */}
       <Route path="courts" element={<CourtsList />} />
