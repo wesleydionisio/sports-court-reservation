@@ -1,6 +1,17 @@
 // backend/models/Court.js
 const mongoose = require('mongoose');
 
+const OperatingHoursSchema = new mongoose.Schema({
+  open: {
+    type: String,
+    required: true,
+  },
+  close: {
+    type: String,
+    required: true,
+  },
+}, { _id: false }); // Desativa a criação automática de _id
+
 const CourtSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -17,12 +28,9 @@ const CourtSchema = new mongoose.Schema({
   },
   allowedSports: [String],
   operatingHours: {
-    // Exemplo: { Monday: { open: "08:00", close: "22:00" }, ... }
+    // Exemplo: { Segunda-feira: { open: "08:00", close: "22:00" }, ... }
     type: Map,
-    of: {
-      open: String,
-      close: String,
-    },
+    of: OperatingHoursSchema,
     required: true,
   },
   availableDatesTimes: [{

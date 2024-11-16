@@ -76,6 +76,7 @@ const Booking = () => {
   };
 
   // Função para capitalizar a primeira letra (para corresponder aos dias da semana no backend)
+
   const capitalizeFirstLetter = (string) => {
     return string.charAt(0).toUpperCase() + string.slice(1);
   };
@@ -95,7 +96,8 @@ const Booking = () => {
           console.log(`Horários reservados:`, bookedSlots);
   
           // Obter os horários de funcionamento para o dia selecionado
-          const dayOfWeek = selectedDate.toLocaleDateString('pt-BR', { weekday: 'long' }); // Alterado para 'pt-BR'
+          const dayOfWeekRaw = selectedDate.toLocaleDateString('pt-BR', { weekday: 'long' });
+          const dayOfWeek = capitalizeFirstLetter(dayOfWeekRaw);
           console.log(`Dia da semana: ${dayOfWeek}`);
           const operatingHours = court.operatingHours[dayOfWeek];
           console.log(`Horários de funcionamento:`, operatingHours);
@@ -322,5 +324,7 @@ const Booking = () => {
     </div>
   );
 };
+
+
 
 export default Booking;
