@@ -2,24 +2,23 @@
 const express = require('express');
 const router = express.Router();
 const { 
-  getAllUsers, 
+  getUsers, 
   getUserById, 
-  getUserByEmail, 
   createUser, 
   updateUser, 
   deleteUser 
 } = require('../controllers/userController');
-const { protect, admin } = require('../middleware/authMiddleware');
+const { protect, admin } = require('../middlewares/authMiddleware');
 
 // Rotas públicas (por exemplo, login e registro)
-const { loginUser, registerUser } = require('../controllers/authController');
+const { login, register } = require('../controllers/authController');
 
-router.post('/login', loginUser);
-router.post('/register', registerUser);
+router.post('/login', login);
+router.post('/register', register);
 
 // Rotas protegidas (apenas para administradores)
 router.route('/')
-  .get(protect, admin, getAllUsers)
+  .get(protect, admin, getUsers)
   .post(protect, admin, createUser); // Criação de usuário (incluindo admins)
 
 router.route('/:id')

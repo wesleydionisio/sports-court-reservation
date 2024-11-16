@@ -3,8 +3,7 @@ const express = require('express');
 const connectDB = require('./config/db');
 const dotenv = require('dotenv');
 const cors = require('cors');
-const path = require('path');  
- 
+const path = require('path');   
 
 dotenv.config();
 
@@ -17,14 +16,23 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Rotas
+// Rotas API
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/courts', require('./routes/courtRoutes'));
 app.use('/api/reservations', require('./routes/reservationRoutes'));
+app.use('/api/users', require('./routes/userRoutes')); // Certifique-se de adicionar esta rota
 
-// Rota raiz
-app.get('/', (req, res) => {
+// Rota raiz da API
+app.get('/api', (req, res) => {
   res.send('API de Agendamento de Quadras Esportivas');
+});
+
+// Servir arquivos estáticos do frontend após build
+app.use(express.static(path.join(__dirname, '../frontend/build')));
+
+// Rota para todas as outras solicitações, servindo o React app
+app.get('*', (req, res) => {
+  res.sendFile(path.resolve(__dirname, '../frontend/build', 'index.html'));
 });
 
 // Captura de erros de porta em uso
@@ -45,10 +53,6 @@ server.on('error', (err) => {
   }
 });
 
-// Servir arquivos estáticos do frontend
-app.use(express.static(path.join(__dirname, '../frontend/src/pages')));
+app.use('/api/admin', require('./routes/adminRoutes'));
 
-// Rota para páginas
-app.get('*', (req, res) => {
-  res.sendFile(path.resolve(__dirname, '../frontend/src/pages', 'home.html'));
-});
+app.use('/api/users', require('./routes/userRoutes'));

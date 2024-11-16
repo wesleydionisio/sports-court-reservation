@@ -1,7 +1,6 @@
-// src/routes/AdminRoutes.js
+// frontend/src/routes/AdminRoutes.js
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import AdminPanel from '../pages/AdminPanel';
 import Dashboard from '../components/Admin/Dashboard';
 import CourtsList from '../components/Admin/Courts/CourtsList';
 import AddCourt from '../components/Admin/Courts/AddCourt';
@@ -17,31 +16,23 @@ import AdminRoute from '../middlewares/AdminRoute';
 const AdminRoutes = () => {
   return (
     <Routes>
-      <Route
-        path="/admin/*"
-        element={
-          <AdminRoute>
-            <AdminPanel />
-          </AdminRoute>
-        }
-      >
-        <Route path="dashboard" element={<Dashboard />} />
-        
-        {/* Quadras */}
-        <Route path="courts" element={<CourtsList />} />
-        <Route path="courts/add" element={<AddCourt />} />
-        <Route path="courts/edit/:id" element={<EditCourt />} />
-        
-        {/* Usuários */}
-        <Route path="users" element={<UsersList />} />
-        <Route path="users/add" element={<AddUser />} />
-        <Route path="users/edit/:id" element={<EditUser />} />
-        
-        {/* Reservas */}
-        <Route path="reservations" element={<ReservationsList />} />
-        <Route path="reservations/add" element={<AddReservation />} />
-        <Route path="reservations/edit/:id" element={<EditReservation />} />
-      </Route>
+      {/* Rotas Aninhadas sem o prefixo /admin */}
+      <Route path="dashboard" element={<Dashboard />} />
+      
+      {/* Quadras */}
+      <Route path="courts" element={<CourtsList />} />
+      <Route path="courts/add" element={<AddCourt />} />
+      <Route path="courts/edit/:id" element={<EditCourt />} />
+      
+      {/* Usuários */}
+      <Route path="users" element={<UsersList />} />
+      <Route path="users/add" element={<AddUser />} />
+      <Route path="users/edit/:id" element={<EditUser />} />
+      
+      {/* Reservas */}
+      <Route path="reservations" element={<ReservationsList />} />
+      <Route path="reservations/add" element={<AddReservation />} />
+      <Route path="reservations/edit/:id" element={<EditReservation />} />
     </Routes>
   );
 };

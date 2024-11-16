@@ -90,8 +90,8 @@ const AddUser = () => {
             onChange={handleChange}
             required
           >
-            <option value="user">Usuário</option>
-            <option value="admin">Admin</option>
+          <option value="cliente">Cliente</option>
+          <option value="admin">Admin</option>
           </Form.Select>
         </Form.Group>
         

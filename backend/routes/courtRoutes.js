@@ -8,11 +8,15 @@ const {
   updateCourt,
   deleteCourt,
 } = require('../controllers/courtController');
-const { protect, admin } = require('../middlewares/auth');
-
+const { protect, admin } = require('../middlewares/authMiddleware');
+const { getBookedTimeSlots } = require('../controllers/reservationController'); // Importe a função
+  
 // Rotas públicas
 router.get('/', getCourts);
 router.get('/:id', getCourtById);
+
+// Rota para obter horários reservados para uma quadra em uma data específica
+router.get('/:id/bookedSlots', protect, admin, getBookedTimeSlots);
 
 // Rotas protegidas (admin)
 router.post('/', protect, admin, createCourt);
